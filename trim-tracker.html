@@ -124,6 +124,17 @@
   const storageKey = `trimTrackerData-${lang}`;
   let saveTimeout;
 
+  /* ✅ PST/PDT FIX: Always use Los Angeles date (not UTC) */
+  const APP_TZ = "America/Los_Angeles";
+  function laISODate(d = new Date()) {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: APP_TZ,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(d); // -> YYYY-MM-DD
+  }
+
   function debounceSave() {
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
@@ -157,7 +168,7 @@
 
     const dateInput = document.createElement('input');
     dateInput.type = 'date';
-    dateInput.value = data.date || new Date().toISOString().slice(0, 10);
+    dateInput.value = data.date || laISODate();   /* ✅ PST/PDT FIX */
     if (skipViewUpdate) dateInput.dataset.skipCollapse = 'true';
     dateInput.oninput = () => {
       delete dateInput.dataset.skipCollapse;
@@ -207,7 +218,7 @@
         if (!isNaN(val)) sum += val;
       });
       totalCell.innerText = sum.toFixed(2);
-      updateDailyTotals();   // 🔁 this NO LONGER calls updateView()
+      updateDailyTotals();
     }
     updateTotal();
 
@@ -235,7 +246,7 @@
       tbody.querySelectorAll('tr')
     ).filter(r => !r.classList.contains('collapsed-row-header'));
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = laISODate();  /* ✅ PST/PDT FIX */
     const dateGroups = {};
 
     rows.forEach(row => {
@@ -310,7 +321,7 @@
       }
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = laISODate(); /* ✅ PST/PDT FIX */
     const todayStorageKey = 'trimTrackerDailyTotal-' + today;
 
     if (totalsMap[today] !== undefined) {
@@ -334,7 +345,7 @@
 
   /* ✅ NEW: Clears ONLY past entries, keeps today's rows */
   function clearPastEntries() {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = laISODate(); /* ✅ PST/PDT FIX */
     const confirmMsg = `¿Estás seguro de que deseas borrar TODAS las entradas pasadas y mantener solo las de hoy (${today})?`;
     if (!confirm(confirmMsg)) return;
 
