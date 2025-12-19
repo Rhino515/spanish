@@ -274,6 +274,20 @@
 <script>
   let lastCalculated = null;
 
+  /* ✅ PST/PDT helper (America/Los_Angeles) */
+  function laDateISO(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date);
+    const y = parts.find(p => p.type === 'year')?.value;
+    const m = parts.find(p => p.type === 'month')?.value;
+    const d = parts.find(p => p.type === 'day')?.value;
+    return `${y}-${m}-${d}`;
+  }
+
   function calculateBonus(grams) {
     let bonusPay = 0;
     if (grams > 1587) {
@@ -310,8 +324,7 @@
       return;
     }
 
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
+    const dateStr = laDateISO(); /* ✅ PST/PDT date */
     const entry = { date: dateStr, grams: grams, bonusPay: bonusPay.toFixed(2) };
 
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
@@ -518,7 +531,7 @@
   }
 
   function updateTrackerDailyTotal() {
-    const todayISO = new Date().toISOString().split('T')[0];
+    const todayISO = laDateISO(); /* ✅ PST/PDT date */
     const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
     const el = document.getElementById('trackerDailyTotalDisplay');
     if (!el) return;
@@ -789,7 +802,7 @@
     history.forEach(entry => {
       const parsed = new Date(entry.date);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date) && !isNaN(parsed.getTime())) {
-        entry.date = parsed.toISOString().split('T')[0];
+        entry.date = laDateISO(parsed); /* ✅ PST/PDT normalize */
         changed = true;
       }
     });
@@ -807,7 +820,7 @@
     const importBtn = document.getElementById('import-tracker-total');
     if (importBtn) {
       importBtn.addEventListener('click', () => {
-        const todayISO = new Date().toISOString().split('T')[0];
+        const todayISO = laDateISO(); /* ✅ PST/PDT date */
         const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
         if (trackerTotal) {
           document.getElementById('grams').value = trackerTotal;
